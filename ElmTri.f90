@@ -9,6 +9,9 @@ program ElmTri
 ! Compilation in terminal linux:
 ! gfortran ElmTri.f90 -o ElmTri
 
+! Compilation in terminal linux with debugging steps:
+! gfortran ElmTri.f90 -O0 -fcheck=all -Wall -Wextra -fbacktrace -o ElmTri
+
 ! Output format instructions
 200 format (I6, 12E13.3)
 300 format (En13.3)
@@ -364,12 +367,6 @@ do j=1, num_trials
     ! Solving matrix equation [G]*{i} = {L}
     call gauss_2(G_matrix,L_vector,I_vector,num_forces)
     
-    N(1) = I_vector(1)
-    T(1) = I_vector(2)
-    
-    T(num_slices) = I_vector(num_forces-1)
-    N(num_slices) = I_vector(num_forces)
-    
     ! Checking equilibrium of first slice
     res_FV = -weight(1) + I_vector(1)*cos(alpha(1)) + I_vector(2)*sin(alpha(1)) - I_vector(4) &
            & + U(1)*cos(alpha(1)) - V_load(1)
@@ -447,11 +444,26 @@ do j=1, num_trials
     !write(*,*) Total_residue(j)
     !write(*,*) "  "
 
+    ! Normal force at the base of slice
+    ! Tangential force at the base of slice
+    do, i=1, num_slices
     
-    do, i=2, num_slices
-
-        N(i) = I_vector(6*i-7)     ! Normal force at the base of slice
-        T(i) = I_vector(6*i-6)     ! Tangential force at the base of slice
+        if (i==1) then
+        
+            N(1) = I_vector(1)
+            T(1) = I_vector(2)
+            
+        else if (i==num_slices) then
+        
+            T(num_slices) = I_vector(num_forces-1)
+            N(num_slices) = I_vector(num_forces)
+        
+        else
+    
+            N(i) = I_vector(6*i-7)     
+            T(i) = I_vector(6*i-6)     
+            
+        end if
     
     end do
     
@@ -504,9 +516,17 @@ do j=1, num_trials
         write(output_file,*) " "
         write(output_file,*) "Force number      Force"
         
-        do, i=1, num_forces
+        N(1) = I_vector(1)
+        T(1) = I_vector(2)
+        
+        do, i=2, num_slices
         
             N(i) = I_vector(6*i-7)
+    
+        end do
+        
+        do, i=1, num_forces
+        
             write(output_file,500) i, I_vector(i)
     
         end do
@@ -545,8 +565,13 @@ do j=1, num_trials
             Tot_sum_C_cos_alpha = Tot_sum_C_cos_alpha + &
                                   & slice_C(i)*slice_length(i)*cos(slice_alpha(i))
         
-            N(i) = I_vector(6*i-7)
-            T(i) = I_vector(6*i-6)
+            if (i==1) then
+                N(i) = I_vector(1)
+                T(i) = I_vector(2)
+            else
+                N(i) = I_vector(6*i-7)
+                T(i) = I_vector(6*i-6)
+            end if
             
             sigma(i) = N(i)/slice_length(i)
             tau_avail(i) = slice_C(i) + sigma(i)*tan((pi/180)*slice_phi(i))
