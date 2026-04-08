@@ -455,8 +455,8 @@ do j=1, num_trials
             
         else if (i==num_slices) then
         
-            T(num_slices) = I_vector(num_forces-1)
-            N(num_slices) = I_vector(num_forces)
+            N(num_slices) = I_vector(num_forces-1)
+            T(num_slices) = I_vector(num_forces)
         
         else
     
